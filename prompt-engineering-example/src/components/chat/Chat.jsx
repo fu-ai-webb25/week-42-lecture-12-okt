@@ -5,7 +5,16 @@ import { useRef, useEffect } from 'react';
 import { useChat } from '../../hooks/useChat';
 
 const Chat = () => {
-    const { messages, getAnswer, isLoading, error, clearHistory } = useChat();
+    const { 
+        messages, 
+        getAnswer, 
+        isLoading, 
+        error, 
+        clearHistory,
+        createBookingPreview,
+        booking,
+        bookingError 
+    } = useChat();
     const inputRef = useRef();
     
     // Hanterar scrollningen på sidan vid nya meddelanden
@@ -15,7 +24,11 @@ const Chat = () => {
             messagesRef.current.scrollTop =
                 messagesRef.current.scrollHeight;
         }
-    }, [messages, isLoading]);  
+    }, [messages, isLoading]); 
+    
+    useEffect(() => {
+        console.log(booking);
+    }, [booking]);
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -36,8 +49,24 @@ const Chat = () => {
         />
     });
 
+    const handleBooking = () => {
+        const userInput = inputRef.current.value;
+        inputRef.current.value = '';
+        createBookingPreview(userInput);
+    }
+
     return (
         <main className="chat">
+            {
+                booking && (
+                    <div className="booking">
+                        <p>Film-ID: {booking.movieId ?? 'Saknas'}</p>
+                        <p>Titel: {booking.title ?? 'Saknas'}</p>
+                        <p>Visning: {booking.showtime ?? 'Saknas'}</p>
+                        <p>Biljetter: {booking.tickets ?? 'Saknas'}</p>
+                    </div>
+                )
+            }
             <section className="chat__messages" ref={ messagesRef }>
                 { messageComponents }
                 { isLoading && <Loading /> }
@@ -47,7 +76,9 @@ const Chat = () => {
                 <input type="text" className="chat__input" ref={ inputRef } />
                 <button className="chat__submit">Skicka</button>
                 <button type="button" className="chat__submit" onClick={ clearHistory } >Clear</button>
+                <button type="button" className="chat__submit" onClick={ handleBooking } >Book tickets</button>
             </form>
+
         </main>
     )
 }

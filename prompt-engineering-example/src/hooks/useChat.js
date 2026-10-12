@@ -5,6 +5,9 @@ import {
     AIMessage,
     SystemMessage
 } from '@langchain/core/messages';
+import { messagePrompt } from '../langchain/prompts';
+import { movies } from '../data/movies';
+import { interpretBooking } from '../langchain/bookings';
 
 
 export const useChat = () => {
@@ -28,6 +31,8 @@ export const useChat = () => {
     });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(false);
+    const [booking, setBooking] = useState(null);
+    const [bookingError, setBookingError] = useState(null);
 
     // useEffect uppdaterar localStorage när nya meddelanden läggs till
     useEffect(() => {
@@ -47,6 +52,7 @@ export const useChat = () => {
     // Funktion: getAnswer
     const getAnswer = async (question) => {
         const userMessage = new HumanMessage(question);
+        const chain = messagePrompt.pipe(llm);
 
         const history = [
             ...messages,
@@ -56,8 +62,13 @@ export const useChat = () => {
         setIsLoading(true);
         setError(false);
 
+
         try {
-            const answer = await llm.invoke(history);
+            const answer = await chain.invoke({
+                movies,
+                history : messages,
+                question : userMessage
+            });
             console.log(answer);
             
             const aiMessage = new AIMessage(answer.content);
@@ -69,6 +80,17 @@ export const useChat = () => {
             setError(error.message);
         } finally {
             setIsLoading(false);
+        }
+    }
+
+    const createBookingPreview = async (question) => {
+        setBooking(null);
+        setBookingError(null);
+        try {
+            const answer = await interpretBooking(question);
+            setBooking(answer);
+        } catch(error) {
+            setBookingError(error.message);
         }
     }
 
@@ -86,6 +108,9 @@ export const useChat = () => {
         getAnswer,
         isLoading,
         error,
-        clearHistory
+        clearHistory,
+        createBookingPreview,
+        booking,
+        bookingError
     }
 }
